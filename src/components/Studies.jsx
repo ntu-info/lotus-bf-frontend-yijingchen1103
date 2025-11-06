@@ -8,14 +8,19 @@ export function Studies ({ query }) {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [sortKey, setSortKey] = useState('year')
-  const [sortDir, setSortDir] = useState('desc') // 'asc' | 'desc'
+  const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(1)
   const pageSize = 20
 
   useEffect(() => { setPage(1) }, [query])
 
   useEffect(() => {
-    if (!query) return
+    if (!query) {
+      setRows([])
+      setErr('')
+      setLoading(false)
+      return
+    }
     let alive = true
     const ac = new AbortController()
     ;(async () => {
@@ -51,7 +56,6 @@ export function Studies ({ query }) {
     arr.sort((a, b) => {
       const A = a?.[sortKey]
       const B = b?.[sortKey]
-      // Numeric comparison for year; string comparison for other fields
       if (sortKey === 'year') return (Number(A || 0) - Number(B || 0)) * dir
       return String(A || '').localeCompare(String(B || ''), 'en') * dir
     })
@@ -62,33 +66,52 @@ export function Studies ({ query }) {
   const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <div className='flex flex-col rounded-2xl border'>
-      <div className='flex items-center justify-between p-3'>
-        <div className='card__title'>Studies</div>
-        <div className='text-sm text-gray-500'>
-           {/* {query ? `Query: ${query}` : 'Query: (empty)'} */}
+    <div className='flex h-full flex-col rounded-2xl border border-gray-200 bg-white/90'>
+      {/* header */}
+      <div className='flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-indigo-500/90 via-fuchsia-500/90 to-rose-500/90 px-3 py-2 text-xs text-white'>
+        <div className='font-semibold'>
+          Studies{' '}
+          {query && !loading && !err && (
+            <span className='ml-1 text-[11px] font-normal opacity-90'>
+              ({sorted.length} found)
+            </span>
+          )}
+        </div>
+        <div className='max-w-[260px] truncate text-right opacity-90'>
+          {query
+            ? `Query: ${query}`
+            : 'Build a query to see matching studies.'}
         </div>
       </div>
 
+      {/* no query yet */}
+      {!query && (
+        <div className='flex flex-1 items-center justify-center p-4 text-sm text-gray-500'>
+          Build a query in the Query Builder to see matching studies here.
+        </div>
+      )}
 
+      {/* loading skeleton */}
       {query && loading && (
         <div className='grid gap-3 p-3'>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className='h-10 animate-pulse rounded-lg bg-gray-100' />
+            <div key={i} className='h-9 animate-pulse rounded-lg bg-indigo-50' />
           ))}
         </div>
       )}
 
-      {query && err && (
-        <div className='mx-3 mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+      {/* error */}
+      {query && err && !loading && (
+        <div className='m-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
           {err}
         </div>
       )}
 
+      {/* table */}
       {query && !loading && !err && (
-        <div className='overflow-auto'>
+        <div className='flex-1 overflow-auto'>
           <table className='min-w-full text-sm'>
-            <thead className='sticky top-0 bg-gray-50 text-left'>
+            <thead className='sticky top-0 bg-indigo-50/90 text-left text-[13px] text-slate-700'>
               <tr>
                 {[
                   { key: 'year', label: 'Year' },
@@ -96,10 +119,16 @@ export function Studies ({ query }) {
                   { key: 'title', label: 'Title' },
                   { key: 'authors', label: 'Authors' }
                 ].map(({ key, label }) => (
-                  <th key={key} className='cursor-pointer px-3 py-2 font-semibold' onClick={() => changeSort(key)}>
-                    <span className='inline-flex items-center gap-2'>
+                  <th
+                    key={key}
+                    className='cursor-pointer px-3 py-2 font-semibold'
+                    onClick={() => changeSort(key)}
+                  >
+                    <span className='inline-flex items-center gap-1'>
                       {label}
-                      <span className='text-xs text-gray-500'>{sortKey === key ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
+                      <span className='text-[10px] text-indigo-500'>
+                        {sortKey === key ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                      </span>
                     </span>
                   </th>
                 ))}
@@ -107,14 +136,30 @@ export function Studies ({ query }) {
             </thead>
             <tbody>
               {pageRows.length === 0 ? (
-                <tr><td colSpan={4} className='px-3 py-4 text-gray-500'>No data</td></tr>
+                <tr>
+                  <td colSpan={4} className='px-3 py-4 text-gray-500'>
+                    No studies match this query.
+                  </td>
+                </tr>
               ) : (
                 pageRows.map((r, i) => (
-                  <tr key={i} className={classNames(i % 2 ? 'bg-white' : 'bg-gray-50')}>
-                    <td className='whitespace-nowrap px-3 py-2 align-top'>{r.year ?? ''}</td>
-                    <td className='px-3 py-2 align-top'>{r.journal || ''}</td>
-                    <td className='max-w-[540px] px-3 py-2 align-top'><div className='truncate' title={r.title}>{r.title || ''}</div></td>
-                    <td className='px-3 py-2 align-top'>{r.authors || ''}</td>
+                  <tr
+                    key={i}
+                    className={classNames(
+                      i % 2 ? 'bg-white' : 'bg-indigo-50/40',
+                      'align-top'
+                    )}
+                  >
+                    <td className='whitespace-nowrap px-3 py-2'>
+                      {r.year ?? ''}
+                    </td>
+                    <td className='px-3 py-2'>{r.journal || ''}</td>
+                    <td className='max-w-[540px] px-3 py-2'>
+                      <div className='truncate' title={r.title}>
+                        {r.title || ''}
+                      </div>
+                    </td>
+                    <td className='px-3 py-2'>{r.authors || ''}</td>
                   </tr>
                 ))
               )}
@@ -123,18 +168,45 @@ export function Studies ({ query }) {
         </div>
       )}
 
+      {/* footer / pagination */}
       {query && !loading && !err && (
-        <div className='flex items-center justify-between border-t p-3 text-sm'>
-          <div>Total <b>{sorted.length}</b> records, page <b>{page}</b>/<b>{totalPages}</b></div>
-          <div className='flex items-center gap-2'>
-            <button disabled={page <= 1} onClick={() => setPage(1)} className='rounded-lg border px-2 py-1 disabled:opacity-40'>⏮</button>
-            <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className='rounded-lg border px-2 py-1 disabled:opacity-40'>Previous</button>
-            <button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className='rounded-lg border px-2 py-1 disabled:opacity-40'>Next</button>
-            <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className='rounded-lg border px-2 py-1 disabled:opacity-40'>⏭</button>
+        <div className='flex items-center justify-between border-t px-3 py-2 text-xs text-gray-600 bg-slate-50/80 rounded-b-2xl'>
+          <div>
+            Total <b>{sorted.length}</b> records, page <b>{page}</b> /{' '}
+            <b>{totalPages}</b>
+          </div>
+          <div className='flex items-center gap-1'>
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(1)}
+              className='rounded-full border px-2 py-1 disabled:opacity-40'
+            >
+              ⏮
+            </button>
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className='rounded-full border px-2 py-1 disabled:opacity-40'
+            >
+              Previous
+            </button>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className='rounded-full border px-2 py-1 disabled:opacity-40'
+            >
+              Next
+            </button>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(totalPages)}
+              className='rounded-full border px-2 py-1 disabled:opacity-40'
+            >
+              ⏭
+            </button>
           </div>
         </div>
       )}
     </div>
   )
 }
-
