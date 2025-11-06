@@ -11,6 +11,8 @@ npm run dev # for local development
 
 npm run build # for server deployment; upload the ./dist folder to a server
 
+### APP URL
+https://ntu-info.github.io/lotus-bf-frontend-yijingchen1103/
 
-### AI Chat Records  
-- [chatGPT 5] ()
+### AI Chat Record   
+[chatGPT-5](https://chatgpt.com/g/g-p-68bff397b2408191b85935a8acc669d0-xin-li-yu-shen-jing-zi-xun/shared/c/690c3eee-84ac-8324-b7ae-7ef56524b898?owner_user_id=user-oQCyjIoOo9KunYVN1XgJyT7d)
